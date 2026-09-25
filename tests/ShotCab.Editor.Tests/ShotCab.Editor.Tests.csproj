@@ -1,0 +1,1 @@
+<Project Sdk="Microsoft.NET.Sdk"><PropertyGroup><TargetFramework>net48</TargetFramework><OutputType>Exe</OutputType><UseWindowsForms>true</UseWindowsForms><PlatformTarget>x64</PlatformTarget></PropertyGroup><ItemGroup><ProjectReference Include="../../upstream/ShareX/ShareX.ScreenCaptureLib/ShareX.ScreenCaptureLib.csproj" /></ItemGroup></Project>

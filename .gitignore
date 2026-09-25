@@ -1,0 +1,40 @@
+.cache/
+**/bin/
+**/obj/
+artifacts/
+ShotCab.Data/
+*.user
+*.suo
+.vs/
+# Local settings, user data and credentials must never enter source control.
+data-location.txt
+settings.json
+*.db
+*.sqlite
+*.sqlite3
+.env
+.env.*
+*.pfx
+*.p12
+*.pem
+*.key
+*.log
+# Local design references and assistant notes are not application source.
+.workbuddy/
+/Apple ui copy/
+/components/
+/preview/
+/ui_kits/
+/assets/icons/
+# Only the ShareX assemblies linked by ShotCab are vendored. The remaining
+# upstream products include unrelated binaries and an embedded certificate.
+/upstream/ShareX/.github/
+/upstream/ShareX/Lib/
+/upstream/ShareX/ShareX/
+/upstream/ShareX/ShareX.HistoryLib/
+/upstream/ShareX/ShareX.IndexerLib/
+/upstream/ShareX/ShareX.NativeMessagingHost/
+/upstream/ShareX/ShareX.Setup/
+/upstream/ShareX/ShareX.Steam/
+/upstream/ShareX/ShareX.UploadersLib/
+/upstream/ShareX/ShareX.sln

@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net48</TargetFramework><OutputType>WinExe</OutputType>
+    <UseWindowsForms>true</UseWindowsForms><AssemblyName>ShotCab</AssemblyName>
+    <ApplicationManifest>app.manifest</ApplicationManifest><PlatformTarget>x64</PlatformTarget>
+    <ApplicationIcon>../../assets/ShotCab-icon.ico</ApplicationIcon>
+    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
+    <GenerateBindingRedirectsOutputType>true</GenerateBindingRedirectsOutputType>
+    <Version>0.1.0</Version><Product>ShotCab · 图柜</Product><Company>ShotCab contributors</Company>
+  </PropertyGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="../../assets/ShotCab-icon.ico" LogicalName="ShotCab.App.Icon" />
+    <ProjectReference Include="../ShotCab.Core/ShotCab.Core.csproj" />
+    <ProjectReference Include="../../upstream/ShareX/ShareX.ScreenCaptureLib/ShareX.ScreenCaptureLib.csproj" />
+    <PackageReference Include="ZXing.Net" Version="0.16.9" />
+  </ItemGroup>
+</Project>

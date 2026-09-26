@@ -1,7 +1,9 @@
 # ShotCab · 图柜
 
+vibe coding产物
+
 Screenshot Cabinet（SC），基于 ShareX 17.1.0 的 Windows 截图工具。
-当前为开发预览版，完整计划尚在实现与验收中。
+当前为开发预览，完整计划尚在实现与验收中。
 
 项目地址：https://github.com/yee-tree/ShotCab
 

@@ -461,6 +461,26 @@ namespace ShotCab.App
             Add(menu, "删除到回收站", () => Trash(new[] { item.Id }));
             Ui.StyleMenu(menu); return menu;
         }
+        public ContextMenuStrip BatchItemMenu(IReadOnlyList<HistoryItem> selectedItems)
+        {
+            var ids = selectedItems.Select(x => x.Id).Distinct(StringComparer.Ordinal).ToArray();
+            if (ids.Length < 2) throw new ArgumentException("Select at least two images.", nameof(selectedItems));
+            var menu = itemMenu;
+            menu.Close();
+            while (menu.Items.Count > 0) menu.Items[0].Dispose();
+            Add(menu, "收藏所选", () => Safe(() => { foreach (string id in ids) Store.SetFavorite(id, true); Refresh(); }));
+            Add(menu, "取消收藏所选", () => Safe(() => { foreach (string id in ids) Store.SetFavorite(id, false); Refresh(); }));
+            Add(menu, "设置标签", () => EditTags(ids));
+            Add(menu, "隐藏所选", () => Safe(() => { foreach (string id in ids) Store.SetHidden(id, true); Refresh(); }));
+            menu.Items.Add(new ToolStripSeparator());
+            Add(menu, "删除所选到回收站", () =>
+            {
+                string question = string.Format(Localize.T("确定将 {0} 张截图移入回收站？"), ids.Length);
+                if (MessageBox.Show(question, Localize.T("ShotCab · 请确认"), MessageBoxButtons.YesNo, MessageBoxIcon.Warning) == DialogResult.Yes)
+                    Trash(ids);
+            });
+            Ui.StyleMenu(menu); return menu;
+        }
         internal void PreviewCard(HistoryItem item, Point location, bool startDrag = true)
         {
             using (var image = Images.Load(item.CurrentPath))

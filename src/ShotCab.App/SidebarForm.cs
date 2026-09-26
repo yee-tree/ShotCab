@@ -64,8 +64,13 @@ namespace ShotCab.App
                 foreach (var tab in new[] { recentTab, historyTab, settingsTab }) { tab.Font=Ui.Font(compact ? 8 : 9); tab.Margin=compact ? new Padding(1) : new Padding(4); }
             };
             footer = new Label { Dock = DockStyle.Bottom, Height = 35, TextAlign = ContentAlignment.MiddleCenter, ForeColor = Ui.Muted, Cursor = Cursors.Hand };
-            footer.Click += (s, e) => app.ShowHistory();
             strip = new PhotoStrip(app) { Dock = DockStyle.Fill };
+            footer.Click += (s, e) =>
+            {
+                if (strip.SelectedCount > 1) app.BatchItemMenu(strip.SelectedItems).Show(footer, new Point(0, 0));
+                else app.ShowHistory();
+            };
+            strip.SelectionChanged += UpdateFooter;
             foreach (Control tab in new[] { recentTab, historyTab })
             {
                 tab.AllowDrop = true;
@@ -283,8 +288,11 @@ namespace ShotCab.App
         public void RefreshItems()
         {
             strip.SetItems(app.Store.Query(new HistoryQuery { Limit = history ? 50 : app.Settings.RecentCount, ExcludeHidden = true }).ToList(), history);
-            footer.Text = Localize.T("打开完整历史  ↗"); strip.Invalidate();
+            UpdateFooter(); strip.Invalidate();
         }
+        private void UpdateFooter() => footer.Text = strip.SelectedCount > 1
+            ? string.Format(Localize.T("已选 {0} 张 · 批量操作"), strip.SelectedCount)
+            : Localize.T("打开完整历史  ↗");
         public void RefreshClipboard() => strip.Invalidate();
         internal void SelectHistoryTab() { history = true; ShowBasicSettings(false); RefreshItems(); }
         internal void SelectRecentTab() { history = false; ShowBasicSettings(false); RefreshItems(); }
@@ -399,7 +407,11 @@ namespace ShotCab.App
         private readonly ToolTip tips = new ToolTip();
         private int scroll;
         private Point down;
-        private string pressed, selected, hovered;
+        private string pressed, hovered;
+        private readonly HistorySelection selection = new HistorySelection();
+        internal event Action SelectionChanged;
+        internal int SelectedCount => selection.Count;
+        internal IReadOnlyList<HistoryItem> SelectedItems => rows.Where(r => r.Item != null && selection.Contains(r.Item.Id)).Select(r => r.Item).ToArray();
         private const int Cell = 192;
         private sealed class Row { public HistoryItem Item; public DateTime Date; public int Top, Height, Count; }
         private readonly List<Row> rows = new List<Row>();
@@ -408,7 +420,15 @@ namespace ShotCab.App
         private bool emptyActionHovered;
         private bool dragImportActive;
         public PhotoStrip(CabinetContext app) { this.app = app; DoubleBuffered = true; SetStyle(ControlStyles.SupportsTransparentBackColor, true); SetStyle(ControlStyles.Selectable, false); BackColor = Color.Transparent; AllowDrop = true; }
-        public void SetItems(List<HistoryItem> values, bool grouped = false) { bool added = values.FirstOrDefault()?.Id != items.FirstOrDefault()?.Id; items = values; groupDates = grouped; emptyActionHovered = false; Cursor = Cursors.Default; BuildRows(); foreach (var b in cache.Values) b.Dispose(); cache.Clear(); scroll = added ? 0 : Math.Min(scroll, MaxScroll); Invalidate(); }
+        public void SetItems(List<HistoryItem> values, bool grouped = false)
+        {
+            bool added = values.FirstOrDefault()?.Id != items.FirstOrDefault()?.Id;
+            if (groupDates != grouped) selection.Clear();
+            items = values; groupDates = grouped; emptyActionHovered = false; Cursor = Cursors.Default;
+            BuildRows(); PruneSelection();
+            foreach (var b in cache.Values) b.Dispose(); cache.Clear();
+            scroll = added ? 0 : Math.Min(scroll, MaxScroll); Invalidate();
+        }
         internal static string DateHeading(DateTime date, DateTime today) => date.Date == today.Date ? Localize.T("今天") : date.Date == today.Date.AddDays(-1) ? Localize.T("昨天") : date.ToString("yyyy-MM-dd");
         internal string EmptyStateTitle => groupDates ? Localize.T("暂无历史截图") : Localize.T("还没有近期截图");
         private Rectangle EmptyActionBounds => new Rectangle(Math.Max(8, (Width - 136) / 2), 244, Math.Min(136, Width - 16), 34);
@@ -422,7 +442,10 @@ namespace ShotCab.App
                 foreach(var item in day) { rows.Add(new Row { Item=item,Date=day.Key,Top=top,Height=ItemHeight(item) }); top+=ItemHeight(item); }
             }
         }
-        internal void ToggleDate(DateTime date) { if (!foldedDates.Add(date.Date)) foldedDates.Remove(date.Date); BuildRows(); scroll=Math.Min(scroll,MaxScroll); Invalidate(); }
+        internal void ToggleDate(DateTime date) { if (!foldedDates.Add(date.Date)) foldedDates.Remove(date.Date); BuildRows(); PruneSelection(); scroll=Math.Min(scroll,MaxScroll); Invalidate(); }
+        private IReadOnlyList<string> VisibleIds() => rows.Where(r => r.Item != null).Select(r => r.Item.Id).ToArray();
+        private void PruneSelection() { int before = selection.Count; selection.SetVisible(VisibleIds()); if (selection.Count != before) SelectionChanged?.Invoke(); }
+        private void SelectionDidChange() { SelectionChanged?.Invoke(); Invalidate(); }
         private int MaxScroll => Math.Max(0, (rows.Count == 0 ? 0 : rows.Last().Top + rows.Last().Height) - Height);
         protected override void OnMouseWheel(MouseEventArgs e) { scroll = Math.Max(0, Math.Min(MaxScroll, scroll - e.Delta / 2)); Invalidate(); }
         internal bool CanImport(IDataObject data)
@@ -468,7 +491,7 @@ namespace ShotCab.App
                 base.OnMouseMove(e); return;
             }
             var item = At(e.Location);
-            if (item?.Id != hovered) { hovered = item?.Id; tips.SetToolTip(this, item == null ? "" : string.Join(" · ", Labels(item)) + (item.Redacted && !item.RedactionBaked ? "\n内部原图仍保留，可重新编辑。" : "")); }
+            if (item?.Id != hovered) { hovered = item?.Id; tips.SetToolTip(this, item == null ? "" : string.Join(" · ", Labels(item)) + (item.Redacted && !item.RedactionBaked ? "\n内部原图仍保留，可重新编辑。" : "") + "\n" + Localize.T("Ctrl+单击增减选择，Shift+单击选择范围")); }
             if (e.Button == MouseButtons.Left && pressed != null && (Math.Abs(e.X - down.X) + Math.Abs(e.Y - down.Y) > 8))
             {
                 var id = pressed; pressed = null; var hit = items.First(x => x.Id == id);
@@ -490,9 +513,28 @@ namespace ShotCab.App
             }
             var row = rows.FirstOrDefault(r => e.Y+scroll >= r.Top && e.Y+scroll < r.Top+r.Height);
             if (e.Button == MouseButtons.Left && row != null && row.Item == null) { pressed=null; ToggleDate(row.Date); return; }
-            var item = At(e.Location); if (item == null) return;
-            if (e.Button == MouseButtons.Right) { selected = item.Id; pressed = null; Invalidate(); app.ItemMenu(item).Show(this, e.Location); return; }
-            if (e.Button == MouseButtons.Left && pressed == item.Id) { selected = item.Id; app.Copy(item); Invalidate(); }
+            var item = At(e.Location);
+            if (item == null)
+            {
+                if (e.Button == MouseButtons.Left && selection.Count > 0) { selection.Clear(); SelectionDidChange(); }
+                pressed = null; base.OnMouseUp(e); return;
+            }
+            var visibleIds = VisibleIds();
+            if (e.Button == MouseButtons.Right)
+            {
+                selection.SelectForContext(visibleIds, item.Id); pressed = null; SelectionDidChange();
+                if (selection.Count > 1) app.BatchItemMenu(SelectedItems).Show(this, e.Location);
+                else app.ItemMenu(item).Show(this, e.Location);
+                return;
+            }
+            if (e.Button == MouseButtons.Left && pressed == item.Id)
+            {
+                bool control = (ModifierKeys & Keys.Control) != 0;
+                bool shift = (ModifierKeys & Keys.Shift) != 0;
+                selection.Click(visibleIds, item.Id, control, shift);
+                SelectionDidChange();
+                if (!control && !shift) app.Copy(item);
+            }
             pressed = null; base.OnMouseUp(e);
         }
         protected override void OnPaint(PaintEventArgs e)
@@ -526,7 +568,7 @@ namespace ShotCab.App
                 }
                 string caption = (item.Favorite ? "★ " : "") + item.CreatedUtc.ToLocalTime().ToString("MM-dd HH:mm") + (Width < 230 ? "" : "  " + item.Width + "×" + item.Height);
                 TextRenderer.DrawText(e.Graphics, caption, Font, new Rectangle(box.X + 8, box.Bottom - 28, box.Width - 16, 23), Ui.Muted, TextFormatFlags.EndEllipsis | TextFormatFlags.VerticalCenter);
-                if (selected == item.Id) using (var path = Ui.Rounded(box, 10)) using (var pen = new Pen(Ui.Accent, 2)) e.Graphics.DrawPath(pen, path);
+                if (selection.Contains(item.Id)) using (var path = Ui.Rounded(box, 10)) using (var pen = new Pen(Ui.Accent, 2)) e.Graphics.DrawPath(pen, path);
                 if (app.Clipboard.OwnsClipboard && app.Clipboard.ItemId == item.Id) using (var brush = new SolidBrush(Color.FromArgb(139, 226, 175))) e.Graphics.FillEllipse(brush, box.X + 9, box.Y + 9, 9, 9);
             }
             foreach (var key in cache.Keys.Where(x => !visible.Contains(x)).ToArray()) { cache[key].Dispose(); cache.Remove(key); }

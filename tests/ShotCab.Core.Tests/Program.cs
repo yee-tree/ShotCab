@@ -13,6 +13,7 @@ internal static class Program
     {
         Run(nameof(SettingsDefaultsAndRoundTrip), SettingsDefaultsAndRoundTrip);
         Run(nameof(InstalledDataIsPerUserAndPortableDataStaysLocal), InstalledDataIsPerUserAndPortableDataStaysLocal);
+        Run(nameof(HistorySelectionMatchesExplorerGestures), HistorySelectionMatchesExplorerGestures);
         Run(nameof(AddUpdateAndOcrAreVersionSafe), AddUpdateAndOcrAreVersionSafe);
         Run(nameof(QueryTagsTextFiltersAndSorting), QueryTagsTextFiltersAndSorting);
         Run(nameof(QueryPagingHiddenBakedAndCount), QueryPagingHiddenBakedAndCount);
@@ -130,6 +131,37 @@ internal static class Program
             Equal(Path.Combine(root, "my-history"), DataLocation.Resolve(application, local).RootPath);
             True(!File.Exists(Path.Combine(application, "data-location.txt")), "installed mode wrote into program files");
         });
+    }
+
+    private static void HistorySelectionMatchesExplorerGestures()
+    {
+        var selection = new HistorySelection();
+        var visible = new[] { "a", "b", "c", "d", "e" };
+        selection.Click(visible, "b", false, false);
+        Equal("b", string.Join(",", selection.SelectedIds(visible)));
+
+        selection.Click(visible, "d", true, false);
+        Equal("b,d", string.Join(",", selection.SelectedIds(visible)));
+        selection.Click(visible, "b", true, false);
+        Equal("d", string.Join(",", selection.SelectedIds(visible)));
+
+        selection.Click(visible, "c", false, true);
+        Equal("b,c", string.Join(",", selection.SelectedIds(visible)));
+        selection.Click(visible, "e", true, true);
+        Equal("b,c,d,e", string.Join(",", selection.SelectedIds(visible)));
+
+        selection.SelectForContext(visible, "d");
+        Equal("b,c,d,e", string.Join(",", selection.SelectedIds(visible)));
+        selection.SelectForContext(visible, "a");
+        Equal("a", string.Join(",", selection.SelectedIds(visible)));
+
+        selection.Click(visible, "e", false, false);
+        selection.SetVisible(new[] { "a", "b", "c" });
+        Equal(0, selection.Count);
+        selection.Click(new[] { "a", "b", "c" }, "c", false, true);
+        Equal("c", string.Join(",", selection.SelectedIds(new[] { "a", "b", "c" })));
+        selection.Clear();
+        Equal(0, selection.Count);
     }
 
     private static void QueryPagingHiddenBakedAndCount()

@@ -265,7 +265,7 @@ Ruling: Performance and cross-OS compatibility are acceptance tests, not assumpt
 
 ## 2026-09-19 soft UI, preset settings and copy compatibility
 
-- Read local Apple ui copy design tokens as reference only. The editor now uses rounded
+- Reviewed local design references without including them in the source. The editor now uses rounded
   tool pills with icons and Chinese labels in a wrapping two-row palette; advanced tools
   remain grouped. Theme-aware neutral canvas and rounded toolbar host replace the dense row.
 - Automatic state badges use distinct colors in a dedicated area below the thumbnail;

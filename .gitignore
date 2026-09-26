@@ -21,7 +21,6 @@ settings.json
 *.log
 # Local design references and assistant notes are not application source.
 .workbuddy/
-/Apple ui copy/
 /components/
 /preview/
 /ui_kits/

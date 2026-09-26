@@ -6,7 +6,7 @@
     <ApplicationIcon>../../assets/ShotCab-icon.ico</ApplicationIcon>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
     <GenerateBindingRedirectsOutputType>true</GenerateBindingRedirectsOutputType>
-    <Version>0.1.0</Version><Product>ShotCab · 图柜</Product><Company>ShotCab contributors</Company>
+    <Version>1.0.0</Version><Product>ShotCab · 图柜</Product><Company>ShotCab contributors</Company>
   </PropertyGroup>
   <ItemGroup>
     <EmbeddedResource Include="../../assets/ShotCab-icon.ico" LogicalName="ShotCab.App.Icon" />

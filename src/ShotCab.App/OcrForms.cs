@@ -34,7 +34,7 @@ namespace ShotCab.App
             cancellation.ThrowIfCancellationRequested();
             var executable = app.Settings.OcrExecutablePath;
             if (string.IsNullOrWhiteSpace(executable)) executable = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "ocr", "ShotCab.Ocr.exe");
-            if (!File.Exists(executable)) throw new FileNotFoundException("尚未安装离线 OCR 增强包。请在设置 → OCR 与预览中选择 ShotCab.Ocr.exe（保留其完整目录）。");
+            if (!File.Exists(executable)) throw new FileNotFoundException("未安装离线 OCR。安装版可重新运行安装程序并勾选“离线 OCR”；便携版可在设置 → OCR/其他中选择完整 OCR 组件的 ShotCab.Ocr.exe。");
             var directory = Path.Combine(app.Store.RootPath, "ocr-jobs", Guid.NewGuid().ToString("N")); Directory.CreateDirectory(directory);
             var input = Path.Combine(directory, "input.png"); var output = Path.Combine(directory, "result.json");
             try

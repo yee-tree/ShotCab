@@ -40,11 +40,13 @@ F6 拖动完成选区后直接保存历史、复制并切到近期列表，无�
 完整历史窗口将筛选、列表与预览、批量操作、存储管理分区展示；日期筛选和截图时间完整显示，并支持批量操作与数据目录迁移。
 普通马赛克保留内部原图；“永久应用遮挡”不可撤销，且不会影响其他已导出的副本。
 
-OCR 增强包单独构建，在“设置 → OCR 与预览”选择其中的 `ShotCab.Ocr.exe`。
+安装版可在安装向导中选择是否一并安装离线 OCR；安装后使用默认路径，无需手动选择程序。
+便携版可单独构建 OCR 增强包，在“设置 → OCR/其他”选择其中的 `ShotCab.Ocr.exe`。
 必须保留增强包完整目录。无需 Python；识别结束后工作进程退出。
 图片编辑器底栏有直接识别按钮；“设置 → OCR/其他”也可开启进入编辑器时自动识别。结果在同一窗口右侧显示实时字数，可修改；图片文字可拖选，并通过 Ctrl+C 或右侧复制按钮复制，不另开选字窗口。
 托盘 OCR 截图和历史图片选字仍使用独立选字窗口，支持图上拖选、跨行选择、文字编辑和复制后预览。
-计划中的安装版将内置完整 OCR 组件，安装路径、历史迁移与升级注意事项见 `docs/installer-plan.md`；本轮尚未制作安装程序。
+按用户安装包已提供可选 OCR 组件；安装目录与运行数据目录分离，卸载保留截图历史。
+安装与验收记录见 `docs/installer-release.md`，迁移与后续兼容性测试见 `docs/installer-plan.md`。
 
 ## 构建与检查
 
@@ -56,6 +58,7 @@ OCR 增强包单独构建，在“设置 → OCR 与预览”选择其中的 `Sh
 ./scripts/build.ps1 -Project tests/ShotCab.Editor.Tests/ShotCab.Editor.Tests.csproj
 ./tests/ShotCab.Editor.Tests/bin/Release/net48/ShotCab.Editor.Tests.exe
 ./scripts/build-ocr.ps1
+./scripts/build-installer.ps1 -NsisPath 'F:\path\to\makensis.exe'
 ```
 
 脚本将 NuGet、临时文件与构建缓存定位到本项目 `.cache`，产物在 `artifacts`。

@@ -12,6 +12,7 @@ internal static class Program
     private static int Main()
     {
         Run(nameof(SettingsDefaultsAndRoundTrip), SettingsDefaultsAndRoundTrip);
+        Run(nameof(InstalledDataIsPerUserAndPortableDataStaysLocal), InstalledDataIsPerUserAndPortableDataStaysLocal);
         Run(nameof(AddUpdateAndOcrAreVersionSafe), AddUpdateAndOcrAreVersionSafe);
         Run(nameof(QueryTagsTextFiltersAndSorting), QueryTagsTextFiltersAndSorting);
         Run(nameof(QueryPagingHiddenBakedAndCount), QueryPagingHiddenBakedAndCount);
@@ -104,6 +105,30 @@ internal static class Program
 
             string driveRoot = Path.GetPathRoot(root);
             Equal(driveRoot, new SettingsStore(driveRoot).RootPath);
+        });
+    }
+
+    private static void InstalledDataIsPerUserAndPortableDataStaysLocal()
+    {
+        WithTempRoot(root =>
+        {
+            string application = Path.Combine(root, "application");
+            string local = Path.Combine(root, "user-local");
+            Directory.CreateDirectory(application);
+
+            DataLocation portable = DataLocation.Resolve(application, local);
+            Equal(false, portable.IsInstalled);
+            Equal(Path.Combine(application, "ShotCab.Data"), portable.RootPath);
+            Equal(Path.Combine(application, "data-location.txt"), portable.PointerPath);
+
+            File.WriteAllText(Path.Combine(application, "installed.mode"), "installed");
+            DataLocation installed = DataLocation.Resolve(application, local);
+            Equal(true, installed.IsInstalled);
+            Equal(Path.Combine(local, "ShotCab", "Data"), installed.RootPath);
+            Equal(Path.Combine(local, "ShotCab", "data-location.txt"), installed.PointerPath);
+            installed.WritePointer(Path.Combine(root, "my-history"));
+            Equal(Path.Combine(root, "my-history"), DataLocation.Resolve(application, local).RootPath);
+            True(!File.Exists(Path.Combine(application, "data-location.txt")), "installed mode wrote into program files");
         });
     }
 

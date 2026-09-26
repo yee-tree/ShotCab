@@ -9,7 +9,7 @@ $taskArchive = [IO.Compression.ZipFile]::Open($taskOutput, [IO.Compression.ZipAr
 try {
     # Explicit source roots exclude local user data, caches, models and compiled output.
     $taskFiles = @(Get-ChildItem -LiteralPath $taskRoot -File | Where-Object { $_.Name -in @('.gitignore', 'Directory.Build.targets', 'README.md', 'LICENSE', 'NOTICE.md') })
-    foreach ($taskDirectory in @('src', 'tests', 'scripts', 'docs', 'assets')) {
+    foreach ($taskDirectory in @('src', 'tests', 'scripts', 'docs', 'assets', 'packaging')) {
         $taskFiles += Get-ChildItem -LiteralPath (Join-Path $taskRoot $taskDirectory) -Recurse -File |
             Where-Object { $_.FullName.Substring($taskRoot.Length) -notmatch '[\\/](bin|obj|\.git|\.vs|ShotCab\.Data)[\\/]|[\\/]assets[\\/]icons[\\/]|[\\/](settings\.json|data-location\.txt)$|\.(pfx|p12|pem|key|db|sqlite|sqlite3|log)$' }
     }

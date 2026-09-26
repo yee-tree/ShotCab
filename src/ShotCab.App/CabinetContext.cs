@@ -42,7 +42,7 @@ namespace ShotCab.App
         private HistoryForm history;
         private readonly ContextMenuStrip itemMenu = new ContextMenuStrip();
         private DateTime lastCleanup = DateTime.MinValue, lastWarning = DateTime.MinValue;
-        private readonly string pointerPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "data-location.txt");
+        private readonly DataLocation dataLocation;
         private Rectangle lastRegion;
         private RegionCaptureOptions captureOptions;
         private Bitmap lastImage;
@@ -54,8 +54,9 @@ namespace ShotCab.App
         public CabinetContext(string dataRoot = null, bool interactive = true)
         {
             this.interactive = interactive;
-            var root = dataRoot ?? (File.Exists(pointerPath) ? File.ReadAllText(pointerPath).Trim() : Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "ShotCab.Data"));
-            if (dataRoot == null && File.Exists(pointerPath) && !Directory.Exists(root)) throw new IOException("历史目录暂时不可用，请恢复连接后重试：" + root);
+            dataLocation = DataLocation.Resolve(AppDomain.CurrentDomain.BaseDirectory, Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData));
+            var root = dataRoot ?? dataLocation.RootPath;
+            if (dataRoot == null && File.Exists(dataLocation.PointerPath) && !Directory.Exists(root)) throw new IOException("历史目录暂时不可用，请恢复连接后重试：" + root);
             Store = new HistoryStore(root); settingsStore = new SettingsStore(root); Settings = settingsStore.Load();
             Localize.SetLanguage(Settings.Language);
             if (Settings.SidebarWidth < AppSettings.SidebarMinimumWidth) Settings.SidebarWidth = AppSettings.SidebarMinimumWidth;
@@ -305,7 +306,7 @@ namespace ShotCab.App
                         {
                             if (!form.IsDisposed && ReferenceEquals(editorOcrCancellation, current))
                                 form.ShotCabSetOcrSelectionStatus(ex is FileNotFoundException && Localize.English
-                                    ? "Offline OCR is not installed. Select ShotCab.Ocr.exe in Settings → OCR/Other and keep its full folder."
+                                    ? "Offline OCR is not installed. Rerun setup and select Offline OCR, or choose the complete portable OCR component in Settings → OCR/Other."
                                     : ex.Message);
                         }
                         finally
@@ -518,7 +519,7 @@ namespace ShotCab.App
         public void Migrate(string destination)
         {
             if (BusyIds.Count != 0) throw new InvalidOperationException("迁移前请关闭编辑器、贴图和选字窗口。");
-            var result = Store.MigrateTo(destination); File.WriteAllText(pointerPath, result.DestinationRoot);
+            var result = Store.MigrateTo(destination); dataLocation.WritePointer(result.DestinationRoot);
             Store.Dispose(); Store = result.Store; settingsStore = new SettingsStore(Store.RootPath); settingsStore.Save(Settings); Clipboard = new ClipboardService(Store.RootPath); Refresh();
         }
         private void Maintain() => Safe(() =>

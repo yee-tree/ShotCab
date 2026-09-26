@@ -10,7 +10,16 @@ namespace ShotCab.App
     internal static class Program
     {
         internal static bool Diagnostics;
-        internal static void Trace(string text) { if (Diagnostics) File.AppendAllText(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "startup.log"), DateTime.UtcNow.ToString("O") + " " + text + Environment.NewLine); }
+        internal static void Trace(string text)
+        {
+            if (!Diagnostics) return;
+            string application = AppDomain.CurrentDomain.BaseDirectory;
+            string logDirectory = File.Exists(Path.Combine(application, "installed.mode"))
+                ? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "ShotCab", "logs")
+                : application;
+            Directory.CreateDirectory(logDirectory);
+            File.AppendAllText(Path.Combine(logDirectory, "startup.log"), DateTime.UtcNow.ToString("O") + " " + text + Environment.NewLine);
+        }
         [STAThread]
         private static int Main(string[] args)
         {

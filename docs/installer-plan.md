@@ -1,23 +1,23 @@
 # ShotCab 安装包规划与注意事项
 
-状态：规划稿。此轮不制作、不运行安装程序，也不下载安装器工具。
+状态：首个按用户安装包已实现；此文保留后续迁移和跨机器验收要求。当前实现与本机测试见 [installer-release.md](installer-release.md)。
 
 ## 目标与交付边界
 
-首个安装版应提供一个离线安装包，安装 ShotCab 主程序和完整 OCR 组件。用户安装后点击编辑器的“识别文字”，或开启“进入编辑器时自动识别文字”，应直接运行本地 OCR；正常使用不需要再选择 `ShotCab.Ocr.exe`。保留便携 ZIP 作为另一种交付方式，并为每个二进制版本提供对应源码与许可文件。
+首个安装版提供一个离线安装包，安装 ShotCab 主程序，并让用户在组件页自行选择是否安装完整 OCR 组件。选装 OCR 后，点击编辑器的“识别文字”或开启“进入编辑器时自动识别文字”应直接运行本地 OCR，无需再选择 `ShotCab.Ocr.exe`。保留便携 ZIP 作为另一种交付方式，并为每个公开二进制版本提供对应源码与许可文件。
 
-目前主程序面向 Windows x64、.NET Framework 4.8；OCR 工作进程由 `scripts/build-ocr.ps1` 以 win-x64 自包含方式发布。本机 `artifacts/ShotCab.Ocr` 约 148 MB，安装包容量和磁盘余量检查应按实际构建产物重新计算。
+目前主程序面向 Windows x64、.NET Framework 4.8；OCR 工作进程由 `scripts/build-ocr.ps1` 以 win-x64 自包含方式发布。精简安装载荷中的 OCR 约 128 MB，安装包容量和磁盘余量检查应按每次实际构建产物计算。
 
 ## 安装目录与 OCR
 
-- 安装目录应包含 `ShotCab.exe`、其依赖、`ocr/ShotCab.Ocr.exe`、OCR 模型和运行时，以及 README 和完整的许可声明。模型、字典和原生 DLL 必须保持工作进程预期的相对目录；不能只复制 OCR 可执行文件。
+- 安装目录包含 `ShotCab.exe`、运行依赖、用户说明和许可声明；只有在用户勾选可选组件时才包含 `ocr/ShotCab.Ocr.exe`、OCR 模型和运行时。模型、字典和原生 DLL 必须保持工作进程预期的相对目录；不能只复制 OCR 可执行文件。
 - `OcrService` 已在 OCR 路径为空时查找 `<应用目录>/ocr/ShotCab.Ocr.exe`。安装版应使用这一默认路径；设置中的手动路径仅供便携版、开发调试或自定义组件使用。安装完成后应实际识别一张中英混排图片，而非只检查文件存在。
 - 安装过程不应临时从互联网下载模型或运行时。构建阶段校验模型和字典的已固定哈希，安装包生成后再核对清单与哈希；离线机器也必须能安装和识别。
 - OCR 组件单独分发前已有待完成的第三方许可核对；放进安装包前须逐项确认模型、字典、RapidOCR、ONNX Runtime、SkiaSharp、运行时文件及其声明文件，形成随包清单。现有 `docs/OCR-NOTICE.md` 是核对起点，不能代替最终清单。
 
 ## 用户数据与卸载
 
-**先改数据目录，再做安装包。** 当前默认历史路径是 `<应用目录>/ShotCab.Data`，`data-location.txt` 也在应用目录。安装到受保护目录后，普通用户可能无法写入；更新程序也不应覆盖历史。安装版建议把新用户的数据放在用户可写的独立目录，并保留自选数据目录能力。便携版仍可使用程序旁的数据目录；两种模式应有明确标识，不能靠安装路径猜测。
+安装版通过 `installed.mode` 标识，将新用户的默认历史放在 `%LOCALAPPDATA%/ShotCab/Data`，自选目录指针放在 `%LOCALAPPDATA%/ShotCab/data-location.txt`；便携版仍使用程序旁的 `ShotCab.Data`。更新程序不覆盖历史；自选数据目录继续可用。现有便携版数据迁移到安装版仍需按下文单独验证。
 
 从便携版或旧预览版迁移时，先显示来源、目标、所需空间和可用空间；复制并验证索引及图片后再切换数据指针，失败时保留原目录可回退。升级不得覆盖 `settings.json`、历史数据库、图片和标注文档。卸载默认保留截图历史，只有用户明确选择并看到具体目录时才删除用户数据；自选目录尤其不能被安装器递归清理。微软的 Windows 应用建议也强调按用户安装、可卸载及让用户选择保留数据。[Windows 应用安装与卸载建议](https://learn.microsoft.com/en-us/windows/apps/get-started/best-practices)
 
@@ -30,7 +30,7 @@
 
 ## 安装技术与开源发布
 
-先做可重复的安装原型，再决定最终技术。传统 EXE 安装器适合验证当前托盘、全局快捷键和自定义数据目录；MSIX 也可评估，但其文件与注册表虚拟化会改变现有程序目录写入等行为，须实测后选择。[MSIX 桌面应用运行机制](https://learn.microsoft.com/en-us/windows/msix/desktop/desktop-to-uwp-behind-the-scenes)
+当前原型采用 NSIS 3.12 的按用户 EXE 安装器，支持可选 OCR 和离线安装。MSIX 仍可作为后续路线评估，但其文件与注册表虚拟化会改变现有行为，须实测后选择。[MSIX 桌面应用运行机制](https://learn.microsoft.com/en-us/windows/msix/desktop/desktop-to-uwp-behind-the-scenes)
 
 选择工具时同时核对其**当前**许可与构建成本，不能假定旧版本条款仍适用；例如 Inno Setup 的官方页面现列出商业许可信息，WiX 也公布了维护费用条件。[Inno Setup 官方许可信息](https://jrsoftware.org/isorder.php)、[WiX 官方费用说明](https://docs.firegiant.com/wix/osmf/)。工具选择不改变 ShotCab 对 ShareX 上游及其他组件的义务：公开二进制时，应提供与该版本对应的源码、构建脚本和许可声明；发布流程需能核对二进制与源码版本。[GNU GPLv3 正文](https://www.gnu.org/licenses/gpl-3.0.html)
 

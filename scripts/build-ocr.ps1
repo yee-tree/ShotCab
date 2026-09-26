@@ -1,4 +1,4 @@
-param([string]$Destination = 'artifacts/ShotCab.Ocr')
+param([string]$Destination = 'artifacts/ShotCab.Ocr', [string]$ModelCache = '')
 $ErrorActionPreference = 'Stop'
 $taskRoot = Split-Path $PSScriptRoot -Parent
 Set-Location $taskRoot
@@ -17,6 +17,13 @@ $taskDownloads = @(
 )
 foreach ($taskDownload in $taskDownloads) {
   $taskFile = Join-Path $taskModels $taskDownload.Name
+  if (!(Test-Path $taskFile) -and $ModelCache) {
+    $taskCached = Join-Path ([IO.Path]::GetFullPath((Join-Path $taskRoot $ModelCache))) $taskDownload.Name
+    if (Test-Path -LiteralPath $taskCached) {
+      if ((Get-FileHash -LiteralPath $taskCached -Algorithm SHA256).Hash -ne $taskDownload.Sha) { throw "模型缓存校验失败：$($taskDownload.Name)" }
+      Copy-Item -LiteralPath $taskCached -Destination $taskFile
+    }
+  }
   if (!(Test-Path $taskFile)) { Invoke-WebRequest -Uri $taskDownload.Url -OutFile ($taskFile + '.download'); Move-Item -LiteralPath ($taskFile + '.download') -Destination $taskFile }
   if ($taskDownload.Sha -and (Get-FileHash -LiteralPath $taskFile -Algorithm SHA256).Hash -ne $taskDownload.Sha) { throw "模型校验失败：$($taskDownload.Name)" }
 }

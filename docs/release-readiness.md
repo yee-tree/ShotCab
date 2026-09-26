@@ -1,6 +1,6 @@
 # ShotCab 源码首发审查（2026-09-26）
 
-当前结论：**经筛选的源码可以公开；按用户安装包已有本机原型和文件清单验证，公开二进制发行仍需跨机器验收。**
+当前结论：**经筛选的源码已公开；按用户安装包已有本机验证，并以开发预览版发布，正式版仍需跨机器验收。**
 本页记录首次源码上传的本地审查，不代表完整法律意见或最终兼容性验收。
 
 ## 已具备
@@ -20,7 +20,7 @@
 
 ## 安装包进度
 
-按用户安装包在 F 盘构建，OCR 为安装时单独勾选的组件，默认不勾选。安装版将新用户数据放在 LocalAppData，便携版仍用程序旁的数据目录。本机安装、OCR、升级、卸载测试及未完成的跨机器测试见 [`installer-release.md`](installer-release.md)；完整后续验收清单见 [`installer-plan.md`](installer-plan.md)。
+按用户安装包在 F 盘构建，OCR 为安装时单独勾选的组件，默认不勾选。[v0.1.0 开发预览版](https://github.com/yee-tree/ShotCab/releases/tag/v0.1.0) 提供安装包、对应源码包和校验值。安装版将新用户数据放在 LocalAppData，便携版仍用程序旁的数据目录。本机安装、OCR、升级、卸载测试及未完成的跨机器测试见 [`installer-release.md`](installer-release.md)；完整后续验收清单见 [`installer-plan.md`](installer-plan.md)。
 
 便携 ZIP 与对应源码包继续保留，供免安装使用和版本核对；安装包不能替代源码交付。
 

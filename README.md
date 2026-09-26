@@ -1,5 +1,11 @@
 # ShotCab · 图柜
 
+## 下载与安装
+
+**Windows x64：**[直接下载 ShotCab 0.1.0 安装包](https://github.com/yee-tree/ShotCab/releases/download/v0.1.0/ShotCab-0.1.0-win-x64-setup.exe) · [版本说明、源码包与校验值](https://github.com/yee-tree/ShotCab/releases/tag/v0.1.0)
+
+这是尚未签名的开发预览版，需要 .NET Framework 4.8。安装时可自行选择是否一并安装离线 OCR，默认不勾选。
+
 vibe coding产物
 
 Screenshot Cabinet（SC），基于 ShareX 17.1.0 的 Windows 截图工具。
